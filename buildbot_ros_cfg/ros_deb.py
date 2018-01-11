@@ -83,7 +83,7 @@ def ros_debbuild(c, job_name, packages, url, distro, arch, rosdistro, version, m
                 haltOnFailure = True,
                 name = package+'-buildsource',
                 command= [Interpolate('%(prop:workdir)s/build_source_deb.py'),
-                    rosdistro, package, Interpolate('%(prop:release_version)s')] + gbp_args,
+                    rosdistro, package, Interpolate('%(prop:release_version)s'), Interpolate('%(prop:workdir)s')] + gbp_args,
                 descriptionDone = ['sourcedeb', package]
             )
         )
@@ -108,7 +108,7 @@ def ros_debbuild(c, job_name, packages, url, distro, arch, rosdistro, version, m
             ShellCommand(
                 haltOnFailure = True,
                 name = package+'-stampdeb',
-                command = ['git-dch', '-a', '--ignore-branch', '--verbose',
+                command = ['gbp', 'dch', '-a', '--ignore-branch', '--verbose',
                            '-N', Interpolate('%(prop:release_version)s-%(prop:datestamp)s'+distro)],
                 descriptionDone = ['stamped changelog', Interpolate('%(prop:release_version)s'),
                                    Interpolate('%(prop:datestamp)s')]

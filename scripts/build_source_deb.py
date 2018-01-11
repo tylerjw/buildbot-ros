@@ -20,33 +20,45 @@ import re
 import os
 import subprocess
 
-def get_buildpackage_version():
-    '''
-    Return the installed version of git-buildpackage as a tuple of three ints
-    '''
-    version_output = subprocess.check_output(['git-buildpackage', '--version'])
-    m = re.match('git-buildpackage\s+([0-9]+)\.([0-9]+)\.([0-9]+)\s*', version_output)
-    if m:
-        return tuple([int(x) for x in m.groups()])
-    return None
+def _get_package_subfolders(basepath, debian_package_name):
+    subfolders = []
+    for filename in os.listdir(basepath):
+        path = os.path.join(basepath, filename)
+        if not os.path.isdir(path):
+            continue
+        if filename.startswith('%s-' % debian_package_name):
+            subfolders.append(path)
+    return subfolders
 
-# Parse command line args
-rosdistro, package, release_version = sys.argv[1:4]
-gbp_args = sys.argv[4:]
+rosdistro, package, release_version, workdir = sys.argv[1:5]
+gbp_args = sys.argv[5:]
 
-# Create a git-buildpackage command appropriate for this slave
-version = get_buildpackage_version()
-print 'Detected git-buildpackage version' + str(version)
-if version[1] >= 6:
-    # This is a new version of git-buildpackage. It knows about the --git-upstream-tree arg
-    command = ['git-buildpackage', '-S', '--git-upstream-tree=TAG',
+try:
+	subfolders = _get_package_subfolders(workdir, debian_pkg)
+	assert len(subfolders) == 1, subfolders
+	sources_dir = subfolders[0]
+except:
+	sources_dir=workdir+'/build'
+
+cmd = ['gbp', 'buildpackage',
+	'--git-ignore-new',
+	'--git-ignore-branch',
+	# dpkg-buildpackage args
+	'-S']
+cmd += [
+	# dpkg-buildpackage args
+	'-us', '-uc']
+	# debuild args for lintian
+	#'--lintian-opts', '--suppress-tags', 'newer-standards-version']
+
+cmd += ['--git-upstream-tree=TAG',
         '--git-upstream-tag=release/{rosdistro}/{package}/{release_version}'.format(
             rosdistro=rosdistro, package=package, release_version=release_version)] + gbp_args
-else:
-    command = ['git-buildpackage', '-S'] + gbp_args
 
-# Call out to git-buildpackage
-print 'Running git-buildpackage command: ' + str(command)
-sys.stdout.flush()
-os.execlp('git-buildpackage', *command)
+# workaround different default compression levels
+# resulting in different checksums for the tarball
+env = dict(os.environ)
+env['GZIP'] = '-9'
 
+print("Invoking '%s' in '%s'" % (' '.join(cmd), sources_dir))
+subprocess.check_call(cmd, cwd=sources_dir, env=env)

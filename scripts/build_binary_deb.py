@@ -19,37 +19,66 @@ import sys
 import re
 import os
 import subprocess
+import traceback
 
-def get_buildpackage_version():
-    '''
-    Return the installed version of git-buildpackage as a tuple of three ints
-    '''
-    version_output = subprocess.check_output(['git-buildpackage', '--version'])
-    m = re.match('git-buildpackage\s+([0-9]+)\.([0-9]+)\.([0-9]+)\s*', version_output)
-    if m:
-        return tuple([int(x) for x in m.groups()])
-    return None
+def dpkg_parsechangelog(source_dir, fields):
+    cmd = ['dpkg-parsechangelog']
+    output = subprocess.check_output(cmd, cwd=source_dir)
+    values = {}
+    for line in output.decode().splitlines():
+        for field in fields:
+            prefix = '%s: ' % field
+            if line.startswith(prefix):
+                values[field] = line[len(prefix):]
+    assert len(fields) == len(values.keys())
+    return [values[field] for field in fields]
 
-# Parse command line args
+def _get_package_subfolders(basepath, debian_package_name):
+    subfolders = []
+    for filename in os.listdir(basepath):
+        path = os.path.join(basepath, filename)
+        if not os.path.isdir(path):
+            continue
+        if filename.startswith('%s-' % debian_package_name):
+            subfolders.append(path)
+    return subfolders
+
+# ensure that one source subfolder exists
+
 debian_pkg, release_version, distro, workdir = sys.argv[1:5]
 gbp_args = sys.argv[5:]
 
-# Create a git-buildpackage command appropriate for this slave
-version = get_buildpackage_version()
-print 'Detected git-buildpackage version ' + str(version)
-if version[1] >= 6:
-    # This is a new version of git-buildpackage. It knows about the --git-upstream-tree arg
-    command = ['git-buildpackage', '--git-pbuilder', '--git-export=WC', '--git-upstream-tree=TAG',
-      '--git-upstream-tag=debian/{debian_pkg}_{release_version}_{distro}'.format(
-        debian_pkg=debian_pkg, release_version=release_version, distro=distro),
-      '--git-export-dir={workdir}'.format(workdir=workdir)] + gbp_args
-else:
-    command = ['git-buildpackage', '--git-pbuilder', '--git-export=WC',
-      '--git-export-dir={workdir}'.format(workdir=workdir)] + gbp_args
+try:
+	subfolders = _get_package_subfolders(workdir, debian_pkg)
+	assert len(subfolders) == 1, subfolders
+	source_dir = subfolders[0]
+except:
+	source_dir=workdir+'/build'
 
-# Call out to git-buildpackage
-print 'Running git-buildpackage command: ' + str(command)
-sys.stdout.flush()
-os.execlp('git-buildpackage', *command)
+source, version = dpkg_parsechangelog( source_dir, ['Source', 'Version'])
 
+# output package version for job description
+print("Package '%s' version: %s" % (debian_pkg, version))
+
+
+cmd = ['apt-src', 'import', source, '--location', source_dir, '--version', version]
+subprocess.check_call(cmd, cwd=source_dir)
+
+source_dir=workdir+'/build'
+cmd = ['apt-src', 'build', source, '--location', source_dir]
+
+print("Invoking '%s' in '%s'" % (' '.join(cmd), source_dir))
+
+try:
+    subprocess.check_call(cmd, cwd=source_dir)
+except subprocess.CalledProcessError:
+    traceback.print_exc()
+    sys.exit("""
+--------------------------------------------------------------------------------------------------
+`{0}` failed.
+This is usually because of an error building the package.
+The traceback from this failure (just above) is printed for completeness, but you can ignore it.
+You should look above `E: Building failed` in the build log for the actual cause of the failure.
+--------------------------------------------------------------------------------------------------
+""".format(' '.join(cmd)))
 

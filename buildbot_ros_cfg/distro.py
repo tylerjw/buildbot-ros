@@ -102,8 +102,8 @@ class RosDistroOracle:
 
     ## @brief Get the job to trigger after this one
     def getDebTrigger(self, repo_name, dist_name):
-        i = self.build_order[dist_name]['deb_jobs'].index(repo_name)
         try:
+            i = self.build_order[dist_name]['deb_jobs'].index(repo_name)
             return [self.build_order[dist_name]['deb_jobs'][i+1], ]
         except:
             return None
@@ -210,9 +210,13 @@ def debbuilders_from_rosdistro(c, oracle, distro, builders):
                 for code_name in build_file.get_target_os_code_names(os):
                     for arch in build_file.get_target_arches(os, code_name):
                         print('Configuring ros_debbuild job for: %s_%s_%s' % (name, code_name, arch))
+			try:
+				package_order = oracle.getPackageOrder(name, distro)
+			except:
+				package_order = {name} #needed if the repo is a package and not a metapackage
                         jobs.append(ros_debbuild(c,
                                                  name,
-                                                 oracle.getPackageOrder(name, distro),
+                                                 package_order,
                                                  rel.repositories[name].url,
                                                  code_name,
                                                  arch,
