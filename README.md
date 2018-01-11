@@ -1,4 +1,5 @@
 # Buildbot-ROS
+
 This is a project for building ROS components using [Buildbot](http://buildbot.net/). This is not
 aimed to be a replacement for the ROS buildfarm, but rather a (hopefully) easier to setup system
 for developers wishing to build their own packages, run continuous integration testing, and build
@@ -7,7 +8,6 @@ docs.
 Please see the mailing list for discussions about setup, usage, and new features: https://groups.google.com/forum/#!forum/buildbot-ros-sig
 
 ## Release Notes
-
  * 0.3.0 (forthcoming) - will support REP-143
  * 0.2.0 (02/20/2016) - supports Trusty, adds github pull request builders
  * 0.1.0 (09/13/2014) - first tagged release, does not support Trusty.
@@ -90,6 +90,8 @@ cache automatically.
 Install prerequisites:
 
     sudo apt-get install python-virtualenv python-dev
+    sudo pip install requests
+    sudo pip install SQLAlchemy==0.7.10
 
 Create a user 'buildbot'. Make sure you don't leave the Name field blank - if you do you'll end up
 with incorrect syntax in the deb changelogs, because git-dch uses the user's actual name in the changelog.
