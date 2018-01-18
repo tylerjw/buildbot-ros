@@ -89,7 +89,7 @@ cache automatically.
 ## Setup for Buildbot Master
 Install prerequisites:
 
-    sudo apt-get install python-virtualenv python-dev
+    sudo apt-get install python-virtualenv python-dev apt-src
     sudo pip install requests
     sudo pip install SQLAlchemy==0.7.10
 
@@ -103,6 +103,7 @@ Log in as the buildbot user, and do the following:
     echo "export PATH=/home/buildbot/buildbot-ros/scripts:${PATH}" >> buildbot-env/bin/activate
     easy_install buildbot==0.8.12 requests
     pip install rosdistro
+    pip install empy
     git clone https://github.com/mikeferguson/buildbot-ros.git
     buildbot create-master buildbot-ros
 

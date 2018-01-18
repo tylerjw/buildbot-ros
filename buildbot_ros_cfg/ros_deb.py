@@ -164,6 +164,13 @@ def ros_debbuild(c, job_name, packages, url, distro, arch, rosdistro, version, m
                 descriptionDone = ['updated in apt', package]
             )
         )
+        f.addStep(
+            ShellCommand(
+                name = package+'-clean',
+                command = ['rm', '-rf', 'debian/'+debian_pkg],
+                hideStepIf = success
+            )
+        )
     # Trigger if needed
     if trigger_pkgs != None:
         f.addStep(
