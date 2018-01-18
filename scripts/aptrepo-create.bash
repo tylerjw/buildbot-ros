@@ -17,7 +17,8 @@ else
     export ARCHS=${2}
 fi
 if [[ ${#} -lt 3 ]]; then
-    export DISTROS=(xenial)
+    #please modify the following parameter depending on your distro (for example xenial)
+    export DISTROS=(trusty) 
 else
     export DISTROS=${@:3}
 fi
