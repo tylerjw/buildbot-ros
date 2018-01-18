@@ -210,10 +210,10 @@ def debbuilders_from_rosdistro(c, oracle, distro, builders):
                 for code_name in build_file.get_target_os_code_names(os):
                     for arch in build_file.get_target_arches(os, code_name):
                         print('Configuring ros_debbuild job for: %s_%s_%s' % (name, code_name, arch))
-			try:
-				package_order = oracle.getPackageOrder(name, distro)
-			except:
-				package_order = {name} #needed if the repo is a package and not a metapackage
+                        try:
+                            package_order = oracle.getPackageOrder(name, distro)
+                        except:
+                            package_order = {name} #needed if the repo is a package and not a metapackage
                         jobs.append(ros_debbuild(c,
                                                  name,
                                                  package_order,

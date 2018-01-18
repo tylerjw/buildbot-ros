@@ -34,22 +34,22 @@ rosdistro, package, release_version, workdir = sys.argv[1:5]
 gbp_args = sys.argv[5:]
 
 try:
-	subfolders = _get_package_subfolders(workdir, debian_pkg)
-	assert len(subfolders) == 1, subfolders
-	sources_dir = subfolders[0]
+    subfolders = _get_package_subfolders(workdir, debian_pkg)
+    assert len(subfolders) == 1, subfolders
+    sources_dir = subfolders[0]
 except:
-	sources_dir=workdir+'/build'
+    sources_dir=workdir+'/build'
 
 cmd = ['gbp', 'buildpackage',
-	'--git-ignore-new',
-	'--git-ignore-branch',
-	# dpkg-buildpackage args
-	'-S']
+    '--git-ignore-new',
+    '--git-ignore-branch',
+    # dpkg-buildpackage args
+    '-S']
 cmd += [
-	# dpkg-buildpackage args
-	'-us', '-uc']
-	# debuild args for lintian
-	#'--lintian-opts', '--suppress-tags', 'newer-standards-version']
+    # dpkg-buildpackage args
+    '-us', '-uc']
+    # debuild args for lintian
+    #'--lintian-opts', '--suppress-tags', 'newer-standards-version']
 
 cmd += ['--git-upstream-tree=TAG',
         '--git-upstream-tag=release/{rosdistro}/{package}/{release_version}'.format(

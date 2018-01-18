@@ -49,11 +49,11 @@ debian_pkg, release_version, distro, workdir = sys.argv[1:5]
 gbp_args = sys.argv[5:]
 
 try:
-	subfolders = _get_package_subfolders(workdir, debian_pkg)
-	assert len(subfolders) == 1, subfolders
-	source_dir = subfolders[0]
+    subfolders = _get_package_subfolders(workdir, debian_pkg)
+    assert len(subfolders) == 1, subfolders
+    source_dir = subfolders[0]
 except:
-	source_dir=workdir+'/build'
+    source_dir=workdir+'/build'
 
 source, version = dpkg_parsechangelog( source_dir, ['Source', 'Version'])
 
