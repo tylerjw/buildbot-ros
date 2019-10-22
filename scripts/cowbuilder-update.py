@@ -84,6 +84,7 @@ def make_cowbuilder(distro, arch, keys):
     while not get_lock(distro, arch):
         time.sleep(1.0)
     print('(' + str(time.time()) +')Got lock!')
+    print(basepath(distro, arch))
     if not os.path.exists(basepath(distro, arch)):
         # create the cowbuilder
         call(['sudo', 'cowbuilder', '--create',

@@ -62,6 +62,7 @@ print("Package '%s' version: %s" % (debian_pkg, version))
 
 
 cmd = ['apt-src', 'import', source, '--location', source_dir, '--version', version]
+print(cmd, source_dir)
 subprocess.check_call(cmd, cwd=source_dir)
 
 source_dir=workdir+'/build'

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+#from rosdistro import *
 from rosdistro import *
 from rosdistro.dependency_walker import *
 from rosdistro.release import *
@@ -8,6 +9,8 @@ from buildbot_ros_cfg.ros_deb import ros_debbuild
 from buildbot_ros_cfg.ros_test import ros_testbuild
 from buildbot_ros_cfg.ros_doc import ros_docbuild
 
+#import ros_buildfarm
+#from ros_buildfarm.config import get_release_build_files
 ## @brief The Oracle tells you all you need to build stuff
 class RosDistroOracle:
     # TODO: use release file blacklist and drop those packages.
