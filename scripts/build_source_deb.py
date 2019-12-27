@@ -41,19 +41,9 @@ except:
     sources_dir=workdir+'/build'
 
 cmd = ['gbp', 'buildpackage',
-    '--git-ignore-new',
-    '--git-ignore-branch',
     # dpkg-buildpackage args
-    '-S']
-cmd += [
-    # dpkg-buildpackage args
-    '-us', '-uc']
-    # debuild args for lintian
-    #'--lintian-opts', '--suppress-tags', 'newer-standards-version']
-
-cmd += ['--git-upstream-tree=TAG',
-        '--git-upstream-tag=release/{rosdistro}/{package}/{release_version}'.format(
-            rosdistro=rosdistro, package=package, release_version=release_version)] + gbp_args
+    '-S',
+    '--git-upstream-tag=' + release_version] + gbp_args
 
 # workaround different default compression levels
 # resulting in different checksums for the tarball
