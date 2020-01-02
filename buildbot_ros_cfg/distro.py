@@ -88,9 +88,6 @@ class RosDistroOracle:
                 self.ordered_packages[dist_name] = dict()
                 repo = dist.repositories[repo_name]
                 packages = repo.release_repository.package_names
-                # Used for making a unique list of elemetes
-                # See: https://stackoverflow.com/a/480227
-                # ordered_packages_set = set()
                 walker = SourceDependencyWalker(dist)
                 packages_depends = dict()
                 for package in packages:
@@ -98,16 +95,6 @@ class RosDistroOracle:
                     depends = {depend for depend in depends if depend in packages}
                     packages_depends[package] = depends
                 self.ordered_packages[dist_name][repo_name] = toposort_flatten(packages_depends)
-                # for package in packages:
-                #     if repo.release_repository.version == None:
-                #         continue
-                #     depends = self.get_depends(dist, package, 'build')
-                #     for dp in depends:
-                #         if dp in packages:
-                #             if not (dp in ordered_packages or ordered_packages_set.add(dp)):
-                #                 ordered_packages.append(dp)
-                #     if not (package in ordered_packages or ordered_packages_set.add(package)):
-                #         ordered_packages.append(package)
             # TODO: this is a bit hacky, come up with a better way to get 'correct' build
             self.build_files[dist_name]['release'] = get_release_build_files(self.index, dist_name)[0]
             self.build_files[dist_name]['source'] = get_source_build_files(self.index, dist_name)[0]
@@ -121,19 +108,6 @@ class RosDistroOracle:
                 if repo in doc.repositories.keys():
                     self.build_order[dist_name]['doc_jobs'].append(repo)
 
-    def get_depends(self, dist, pkg_name, depend_type):
-        pkg = parse_package_string(dist.get_source_package_xml(pkg_name))
-        depends = list()
-        if depend_type == "run":
-            for dep in pkg.exec_depends:
-                depends.append(dep.name)
-        elif depend_type == "buildtool":
-            for dep in pkg.buildtool_depends:
-                depends.append(dep.name)
-        elif depend_type == "build":
-            for dep in pkg.build_depends:
-                depends.append(dep.name)
-        return depends
     ## @brief Get the order to build debian packages within a single repository
     def getOrderedPackages(self, repo_name, dist_name):
         return self.ordered_packages[dist_name][repo_name]
