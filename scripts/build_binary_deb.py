@@ -25,7 +25,7 @@ def dpkg_parsechangelog(source_dir, fields):
     cmd = ['dpkg-parsechangelog']
     output = subprocess.check_output(cmd, cwd=source_dir)
     values = {}
-    for line in output.decode().splitlines():
+    for line in output.decode('utf-8').splitlines():
         for field in fields:
             prefix = '%s: ' % field
             if line.startswith(prefix):
@@ -61,12 +61,16 @@ source, version = dpkg_parsechangelog( source_dir, ['Source', 'Version'])
 print("Package '%s' version: %s" % (debian_pkg, version))
 
 
-cmd = ['apt-src', 'import', source, '--location', source_dir, '--version', version]
-print(cmd, source_dir)
-subprocess.check_call(cmd, cwd=source_dir)
+# cmd = ['apt-src', 'import', source, '--location', source_dir, '--version', version]
+# print(cmd, source_dir)
+# subprocess.check_call(cmd, cwd=source_dir)
 
-source_dir=workdir+'/build'
-cmd = ['apt-src', 'build', source, '--location', source_dir]
+# source_dir=workdir+'/build'
+# cmd = ['apt-src', 'build', source, '--location', source_dir]
+
+cmd = ['gbp', 'buildpackage', '--git-pbuilder', '--git-upstream-tree=TAG',
+      '--git-upstream-tag=debian/{debian_pkg}_{release_version}-0_{distro}'.format(
+        debian_pkg=debian_pkg, release_version=release_version, distro=distro)] + gbp_args
 
 print("Invoking '%s' in '%s'" % (' '.join(cmd), source_dir))
 
