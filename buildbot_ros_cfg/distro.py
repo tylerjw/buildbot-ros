@@ -8,7 +8,9 @@ from rosdistro.release import *
 from buildbot_ros_cfg.ros_deb import ros_debbuild
 from buildbot_ros_cfg.ros_test import ros_testbuild
 from buildbot_ros_cfg.ros_doc import ros_docbuild
+from buildbot_ros_cfg.ros_deb_master import ros_branch_build
 
+from toposort import toposort_flatten
 #import ros_buildfarm
 #from ros_buildfarm.config import get_release_build_files
 ## @brief The Oracle tells you all you need to build stuff
@@ -25,7 +27,7 @@ class RosDistroOracle:
 
         self.build_order = {}
         self.build_files = {}
-
+        self.ordered_packages = {}
         for dist_name in distro_names:
             self.distributions[dist_name] = get_cached_distribution(index, dist_name, allow_lazy_load = True)
             dist = self.distributions[dist_name]
@@ -34,7 +36,11 @@ class RosDistroOracle:
 
             pkg_depends = dict()
             packages = dist.release_packages.keys()
-            walker = DependencyWalker(dist)
+            # Get all the source package xmls
+            for repo_name in dist.repositories:
+                dist.get_source_repo_package_xmls(repo_name)
+
+            walker = SourceDependencyWalker(dist)
 
             # compute dependency of each package
             for pkg in packages:
@@ -74,10 +80,34 @@ class RosDistroOracle:
                         if rd not in depends:
                             depends.append(rd)
                 self._insert(repo, depends, order)
-
             self.build_order[dist_name]['deb_jobs'] = order
 
             self.build_files[dist_name] = dict()
+            # Get the packages name in order for building
+            for repo_name in dist.repositories:
+                self.ordered_packages[dist_name] = dict()
+                repo = dist.repositories[repo_name]
+                packages = repo.release_repository.package_names
+                # Used for making a unique list of elemetes
+                # See: https://stackoverflow.com/a/480227
+                # ordered_packages_set = set()
+                walker = SourceDependencyWalker(dist)
+                packages_depends = dict()
+                for package in packages:
+                    depends = walker.get_recursive_depends(package, ["build", "test"], True)
+                    depends = {depend for depend in depends if depend in packages}
+                    packages_depends[package] = depends
+                self.ordered_packages[dist_name][repo_name] = toposort_flatten(packages_depends)
+                # for package in packages:
+                #     if repo.release_repository.version == None:
+                #         continue
+                #     depends = self.get_depends(dist, package, 'build')
+                #     for dp in depends:
+                #         if dp in packages:
+                #             if not (dp in ordered_packages or ordered_packages_set.add(dp)):
+                #                 ordered_packages.append(dp)
+                #     if not (package in ordered_packages or ordered_packages_set.add(package)):
+                #         ordered_packages.append(package)
             # TODO: this is a bit hacky, come up with a better way to get 'correct' build
             self.build_files[dist_name]['release'] = get_release_build_files(self.index, dist_name)[0]
             self.build_files[dist_name]['source'] = get_source_build_files(self.index, dist_name)[0]
@@ -90,6 +120,23 @@ class RosDistroOracle:
             for repo in order:
                 if repo in doc.repositories.keys():
                     self.build_order[dist_name]['doc_jobs'].append(repo)
+
+    def get_depends(self, dist, pkg_name, depend_type):
+        pkg = parse_package_string(dist.get_source_package_xml(pkg_name))
+        depends = list()
+        if depend_type == "run":
+            for dep in pkg.exec_depends:
+                depends.append(dep.name)
+        elif depend_type == "buildtool":
+            for dep in pkg.buildtool_depends:
+                depends.append(dep.name)
+        elif depend_type == "build":
+            for dep in pkg.build_depends:
+                depends.append(dep.name)
+        return depends
+    ## @brief Get the order to build debian packages within a single repository
+    def getOrderedPackages(self, repo_name, dist_name):
+        return self.ordered_packages[dist_name][repo_name]
 
     ## @brief Get the order to build debian packages within a single repository
     def getPackageOrder(self, repo_name, dist_name):
@@ -229,6 +276,47 @@ def debbuilders_from_rosdistro(c, oracle, distro, builders):
                                                  oracle.getOtherMirror('release', distro, code_name),
                                                  oracle.getKeys('release', distro),
                                                  oracle.getDebTrigger(name, distro)))
+    return jobs
+
+## @brief Create debbuilders from release file
+## @param c The Buildmasterconfig
+## @param oracle The rosdistro oracle
+## @param distro The distro to configure for ('groovy', 'hydro', etc)
+## @param builders list of builders that this job can run on
+## @returns A list of debbuilder names created
+def branch_debbuilders_from_rosdistro(c, oracle, distro, builders):
+    rel = get_source_file(oracle.getIndex(), distro)
+    build_files = get_source_build_files(oracle.getIndex(), distro)
+    jobs = list()
+
+    for name in rel.repositories.keys():
+        if rel.repositories[name].version == None:
+            print('Skipping %s, since it has no version' % name)
+            continue
+        if rel.repositories[name].type != 'git':
+            print('Cannot configure ros_debbuild for %s, as it is not a git repository' % name)
+            continue
+        for build_file in build_files:
+            for os in build_file.get_target_os_names():
+                for code_name in build_file.get_target_os_code_names(os):
+                    for arch in build_file.get_target_arches(os, code_name):
+                        print('Configuring ros_debbuild job for: %s_%s_%s' % (name, code_name, arch))
+                        try:
+                            package_order = oracle.getOrderedPackages(name, distro)
+                        except:
+                            package_order = {name} #needed if the repo is a package and not a metapackage
+                        jobs.append(ros_branch_build(c,
+                                                     name,
+                                                     package_order,
+                                                     rel.repositories[name].url,
+                                                     rel.repositories[name].version,  # release_version
+                                                     code_name,
+                                                     arch,
+                                                     distro,
+                                                     builders,
+                                                     oracle.getOtherMirror('release', distro, code_name),
+                                                     oracle.getKeys('release', distro),
+                                                     oracle.getDebTrigger(name, distro)))
     return jobs
 
 ## @brief Create testbuilders from source file
