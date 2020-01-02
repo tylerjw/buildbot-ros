@@ -41,9 +41,15 @@ except:
     sources_dir=workdir+'/build'
 
 cmd = ['gbp', 'buildpackage',
+    '-d',
     # dpkg-buildpackage args
     '-S',
-    '--git-upstream-tag=' + release_version] + gbp_args
+#    '--git-pbuilder',
+#    '--git-upstream-tag=' + release_version] + gbp_args
+    '--git-upstream-tree=TAG',
+    '--git-upstream-tag=release/{rosdistro}/{package}/{release_version}-0'.format(
+            rosdistro=rosdistro, package=package, release_version=release_version)] + gbp_args
+#cmd += ['--source-option=--include-binaries']
 
 # workaround different default compression levels
 # resulting in different checksums for the tarball
