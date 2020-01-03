@@ -29,7 +29,6 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
     gbp_args = ['-uc', '-us', '--git-ignore-branch', '--git-ignore-new',
                 '--git-verbose', '--git-dist='+distro, '--git-arch='+arch]
     f = BuildFactory()
-    print("Hi Jafor", packages)
 
     # Remove the build directory.
     f.addStep(
