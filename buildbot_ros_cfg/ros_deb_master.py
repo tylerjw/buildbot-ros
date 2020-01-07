@@ -12,6 +12,7 @@ from buildbot.schedulers import triggerable
 from helpers import success
 import subprocess
 import yaml
+import os
 
 ## @brief Debbuilds are used for building sourcedebs & binaries out of gbps and uploading to an APT repository
 ## @param c The Buildmasterconfig
@@ -30,7 +31,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
     gbp_args = ['-uc', '-us', '--git-ignore-branch', '--git-ignore-new',
                 '--git-verbose', '--git-dist='+distro, '--git-arch='+arch]
 
-    with open("spec.yaml") as file:
+    with open(os.path.dirname(os.path.realpath(__file__)) + "/spec.yaml") as file:
         spec_list = yaml.full_load(file)
 
     f = BuildFactory()
