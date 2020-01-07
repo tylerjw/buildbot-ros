@@ -2,5 +2,7 @@
 sync_s3: False
 # The path to the local repo to be synced with the s3 bucket
 local_repo_path: /var/www/building
-# The name of the s3 bucket
-s3_bucket: picknik
+# The name of the s3 bucket, if you want to copy the local folder itself
+# or if the destination is a directory it should end with '/'
+# Removing '/' from the BUCKET_NAME will copy the content of the local folder
+s3_bucket: picknik/
