@@ -92,7 +92,7 @@ Install prerequisites:
 If pip isn't installed
 `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && sudo python get-pip.py`
 
-    sudo apt-get install python-virtualenv python-dev apt-src reprepro dh-make
+    sudo apt-get install python-virtualenv python-dev apt-src reprepro dh-make python-bloom
     sudo pip install requests
     sudo pip install SQLAlchemy==0.7.10
 
