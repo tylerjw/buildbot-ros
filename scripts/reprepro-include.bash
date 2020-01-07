@@ -17,11 +17,11 @@ export DISTRO=${3}
 export ARCH=${4}
 
 # invalidate dependent
-reprepro -V -b $REPO_DIR removefilter $DISTRO "Package (% * ), Architecture (==$ARCH), (Depends (% *$PKG[, ]* ) | Depends (% *$PKG ) )"
+sudo reprepro -V -b $REPO_DIR removefilter $DISTRO "Package (% * ), Architecture (==$ARCH), (Depends (% *$PKG[, ]* ) | Depends (% *$PKG ) )"
 
 # invalidate this package
-reprepro -V -b $REPO_DIR removefilter $DISTRO "Package (==$PKG), Architecture (==$ARCH)"
+sudo reprepro -V -b $REPO_DIR removefilter $DISTRO "Package (==$PKG), Architecture (==$ARCH)"
 
-reprepro -V -b $REPO_DIR deleteunreferenced
+sudo reprepro -V -b $REPO_DIR deleteunreferenced
 
-reprepro -V -b $REPO_DIR includedeb $DISTRO $BUILD_DIR/binarydebs/$NAME
+sudo reprepro -V -b $REPO_DIR includedeb $DISTRO $BUILD_DIR/binarydebs/$NAME
