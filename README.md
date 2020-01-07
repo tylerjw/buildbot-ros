@@ -89,7 +89,10 @@ cache automatically.
 ## Setup for Buildbot Master
 Install prerequisites:
 
-    sudo apt-get install python-virtualenv python-dev apt-src
+If pip isn't installed
+`curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && sudo python get-pip.py`
+
+    sudo apt-get install python-virtualenv python-dev apt-src reprepro dh-make
     sudo pip install requests
     sudo pip install SQLAlchemy==0.7.10
 
@@ -100,11 +103,12 @@ Log in as the buildbot user, and do the following:
     cd ~
     virtualenv --no-site-packages buildbot-env
     source buildbot-env/bin/activate
-    echo "export PATH=/home/buildbot/buildbot-ros/scripts:${PATH}" >> buildbot-env/bin/activate
+    export BUILDBOT_ROS=/path/to/buildbot-ros
+    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
     easy_install buildbot==0.8.12 requests
     pip install rosdistro
     pip install empy
-    git clone https://github.com/mikeferguson/buildbot-ros.git
+    pip install toposort
     buildbot create-master buildbot-ros
 
 If using the Pull Request builder, you will also need to:
@@ -124,24 +128,30 @@ installed into, as 'buildbot':
 
     cd buildbot-ros/scripts
     ./aptrepo-create.bash YourOrganizationName
-
+    
 By default, this script sets up a repository for amd64 and i386 on trusty only. You can fully
-specify what you want though:
+specify what you want though: (on local machine run it with `sudo`)
 
     ./aptrepo-create.bash YourOrganizationName "amd64 i386 armel" precise oneiric hardy yeahright
 
-If you want to sign your repository, you need to generate a GPG key for reprepro to use:
+If you want to sign your repository you need to generate a GPG key for reprepro to use:
 
     gpg --gen-key
 
-Use _gpg --list-keys_ to find the key identifier (for instance AAAABBBB) and add a line in the
+Press `Enter -> Yes, protection is not needed`
+
+Use `gpg --list-secret-keys --keyid-format SHORT` to find the key identifier `ssb   rsa3072/KEY_ID` and add a line in the
 /var/www/building/ubuntu/conf/distributions file with:
 
-    SignWith: AAAABBBB
+    SignWith: KEY_ID
 
 You'll likely want to export the public key:
 
-    gpg --output /var/www/public.key --armor --export AAAABBBB
+    gpg --output /var/www/public.key --armor --export KEY_ID
+
+To edit the gpg key
+
+    gpg --edit-key KEY_ID
 
 When everything is working, buildbot can be added as a startup, by adding to the buildbot user's
 crontab. Open up the crontab for the buildbot user by typing `crontab -e`, then you can use this line to restart the buildbot instance every day at 11pm for example. The second line added to the crontab is optional, it reloads the cache before restarting the buildbot instance. If you use it, don't forget to replace `/path/to/index.yaml` with the real path to you `index.yaml` distribution file.
@@ -173,7 +183,9 @@ for the master. Once you have a buildbot user and virtualenv, do the following a
 
     source buildbot-env/bin/activate
     easy_install buildbot-slave
-    echo "export PATH=/home/buildbot/buildbot-ros/scripts:${PATH}" >> buildbot-env/bin/activate
+    # Run the following two lines only if you're in different machine
+    export BUILDBOT_ROS=/path/to/buildbot-ros
+    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
     buildslave create-slave rosbuilder1 localhost:9989 rosbuilder1 mebuildslotsaros
 
 If you are on a diffent machine then you will need to clone the buildbot-ros repo on it as well.
@@ -192,8 +204,10 @@ For builds to succeed, you'll probably need to make it so the buildbot can run c
 The best way around this is to allow the 'buildbot' user to execute git-buildpackage and
 pbuilder/cowbuilder without a password, by adding the following to your /etc/sudoers file
 (be sure to use visudo):
-
-    buildbot    ALL= NOPASSWD: SETENV: /usr/bin/git-*, /usr/sbin/*builder
+    
+    whoami # to get the USER_NAME
+    sudo visudo
+    USER_NAME    ALL= NOPASSWD: SETENV: /usr/bin/git-*, /usr/sbin/*builder
 
 Note that there is a TAB between buildbot and ALL.
 
