@@ -258,8 +258,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                                '--verbose',
                                'sync',
                                spec_list["local_repo_path"],
-                               's3://{s3_bucket}'.format(s3_bucket=spec_list["s3_bucket"])],
-                    hideStepIf = success
+                               's3://{s3_bucket}'.format(s3_bucket=spec_list["s3_bucket"])]
                 )
             )
     # Trigger if needed
