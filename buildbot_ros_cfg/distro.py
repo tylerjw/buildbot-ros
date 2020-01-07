@@ -252,22 +252,22 @@ def debbuilders_from_rosdistro(c, oracle, distro, builders):
                                                  oracle.getDebTrigger(name, distro)))
     return jobs
 
-## @brief Create debbuilders from release file
+## @brief Create branch debbuilders from source file
 ## @param c The Buildmasterconfig
 ## @param oracle The rosdistro oracle
 ## @param distro The distro to configure for ('groovy', 'hydro', etc)
 ## @param builders list of builders that this job can run on
 ## @returns A list of debbuilder names created
 def branch_debbuilders_from_rosdistro(c, oracle, distro, builders):
-    rel = get_source_file(oracle.getIndex(), distro)
+    source = get_source_file(oracle.getIndex(), distro)
     build_files = get_source_build_files(oracle.getIndex(), distro)
     jobs = list()
 
-    for name in rel.repositories.keys():
-        if rel.repositories[name].version == None:
+    for name in source.repositories.keys():
+        if source.repositories[name].version == None:
             print('Skipping %s, since it has no version' % name)
             continue
-        if rel.repositories[name].type != 'git':
+        if source.repositories[name].type != 'git':
             print('Cannot configure ros_debbuild for %s, as it is not a git repository' % name)
             continue
         for build_file in build_files:
@@ -282,14 +282,14 @@ def branch_debbuilders_from_rosdistro(c, oracle, distro, builders):
                         jobs.append(ros_branch_build(c,
                                                      name,
                                                      package_order,
-                                                     rel.repositories[name].url,
-                                                     rel.repositories[name].version,  # release_version
+                                                     source.repositories[name].url,
+                                                     source.repositories[name].version,  # release_version
                                                      code_name,
                                                      arch,
                                                      distro,
                                                      builders,
-                                                     oracle.getOtherMirror('release', distro, code_name),
-                                                     oracle.getKeys('release', distro),
+                                                     oracle.getOtherMirror('source', distro, code_name),
+                                                     oracle.getKeys('source', distro),
                                                      oracle.getDebTrigger(name, distro)))
     return jobs
 
