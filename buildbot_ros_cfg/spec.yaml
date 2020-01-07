@@ -1,0 +1,6 @@
+# Whether to sync with s3 bucket or not, used with EC2
+sync_s3: False
+# The path to the local repo to be synced with the s3 bucket
+local_repo_path: /var/www/building
+# The name of the s3 bucket
+s3_bucket: picknik
