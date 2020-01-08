@@ -140,6 +140,16 @@ If you want to sign your repository you need to generate a GPG key for reprepro 
 
 Press `Enter -> Yes, protection is not needed`
 
+If it don't allow you to enter empty passpharse, enter any passphrase (remember it, because we'll need it when changing it to empty)
+
+```bash
+gpg --list-keys --keyid-format SHORT
+pub   rsa3072/KEY_ID
+gpg --edit-key KEY_ID
+passwd
+save
+```
+
 Use `gpg --list-secret-keys --keyid-format SHORT` to find the key identifier `ssb   rsa3072/KEY_ID` and add a line in the
 /var/www/building/ubuntu/conf/distributions file with:
 
