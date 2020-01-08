@@ -109,6 +109,7 @@ Log in as the buildbot user, and do the following:
     pip install rosdistro
     pip install empy
     pip install toposort
+    pip install -U bloom
     buildbot create-master buildbot-ros
 
 If using the Pull Request builder, you will also need to:
