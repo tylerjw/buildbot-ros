@@ -106,7 +106,7 @@ Log in as the buildbot user, and do the following:
     source buildbot-env/bin/activate
     export BUILDBOT_ROS=/path/to/buildbot-ros
     echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
-    easy_install buildbot==0.8.12 requests
+    pip install buildbot==0.8.12 requests
     pip install rosdistro
     pip install empy
     pip install toposort
@@ -194,7 +194,7 @@ If you are on a different machine, you'll have to create the buildbot user and v
 for the master. Once you have a buildbot user and virtualenv, do the following as 'buildbot':
 
     source buildbot-env/bin/activate
-    easy_install buildbot-slave
+    pip install buildbot-slave
     # Run the following two lines only if you're in different machine
     export BUILDBOT_ROS=/path/to/buildbot-ros
     echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
