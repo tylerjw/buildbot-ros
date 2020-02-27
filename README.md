@@ -90,7 +90,8 @@ cache automatically.
 Install prerequisites:
 
 If pip isn't installed
-`curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && sudo python get-pip.py`
+
+- `curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && sudo python get-pip.py`
 
     sudo apt-get install python-virtualenv python-dev apt-src reprepro dh-make
     sudo pip install requests
