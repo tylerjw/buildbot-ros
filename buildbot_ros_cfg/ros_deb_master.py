@@ -89,11 +89,12 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         )
     )
     # Prepare the release without pushing it
+    # Set very big number to avoid conflicts with available tags
     f.addStep(
         ShellCommand(
             haltOnFailure = True,
             name = 'catkin_prepare_release',
-            command= ['catkin_prepare_release', '--bump', 'minor', '--no-push', '-y'],
+            command= ['catkin_prepare_release', '--version', '100.0.0', '--no-push', '-y'],
             descriptionDone = ['catkin_prepare_release']
         )
     )
@@ -124,7 +125,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         debian_pkg = 'ros-'+rosdistro+'-'+package.replace('_','-')  # debian package name (ros-groovy-foo)
         branch_name = 'debian/'+debian_pkg+'_%(prop:release_version)s-0_'+distro
         deb_name = debian_pkg+'_%(prop:release_version)s-0'+distro
-        final_name = debian_pkg+'_%(prop:release_version)s-%(prop:datestamp)s'+distro+'_'+arch+'.deb'
+        final_name = debian_pkg+'_%(prop:release_version)s-0'+distro+'_'+arch+'.deb'
         # Check out the proper tag. Use --force to delete changes from previous deb stamping
         f.addStep(
             ShellCommand(
@@ -132,62 +133,6 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                 name = package+'-checkout',
                 command = ['git', 'checkout', Interpolate(branch_name), '--force'],
                 hideStepIf = success
-            )
-        )
-        # A hack for generating the debian folder so we could build the lastest commit of the specified branch
-        # f.addStep(
-        #     ShellCommand(
-        #         haltOnFailure = True,
-        #         name = package+'-bloom_generate',
-        #         command= ['bloom-generate', 'rosdebian'],
-        #         descriptionDone = ['bloom_generate', package]
-        #     )
-        # )
-        # Download script for building the source deb
-        f.addStep(
-            FileDownload(
-                name = job_name+'-grab-build-source-deb-script',
-                mastersrc = 'scripts/build_source_deb.py',
-                slavedest = Interpolate('%(prop:workdir)s/build_source_deb.py'),
-                mode = 0755,
-                hideStepIf = success
-            )
-        )
-        # Build the source deb
-        f.addStep(
-            ShellCommand(
-                haltOnFailure = True,
-                name = package+'-buildsource',
-                command= [Interpolate('%(prop:workdir)s/build_source_deb.py'),
-                    rosdistro, package, Interpolate('%(prop:release_version)s'), Interpolate('%(prop:workdir)s')] + gbp_args,
-                descriptionDone = ['sourcedeb', package]
-            )
-        )
-        # Upload sourcedeb to master (currently we are not actually syncing these with a public repo)
-        f.addStep(
-            FileUpload(
-                name = package+'-uploadsource',
-                slavesrc = Interpolate('%(prop:workdir)s/'+deb_name+'.dsc'),
-                masterdest = Interpolate('sourcedebs/'+deb_name+'.dsc'),
-                hideStepIf = success
-            )
-        )
-        # Stamp the changelog, in a similar fashion to the ROS buildfarm
-        f.addStep(
-            SetPropertyFromCommand(
-                command="date +%Y%m%d-%H%M-%z", property="datestamp",
-                name = package+'-getstamp',
-                hideStepIf = success
-            )
-        )
-        f.addStep(
-            ShellCommand(
-                haltOnFailure = True,
-                name = package+'-stampdeb',
-                command = ['gbp', 'dch', '-a', '--ignore-branch', '--verbose',
-                           '-N', Interpolate('%(prop:release_version)s-%(prop:datestamp)s'+distro)],
-                descriptionDone = ['stamped changelog', Interpolate('%(prop:release_version)s'),
-                                   Interpolate('%(prop:datestamp)s')]
             )
         )
         # download hooks
@@ -219,8 +164,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                     Interpolate('%(prop:release_version)s'), distro, Interpolate('%(prop:workdir)s')] + gbp_args,
                 env = {'DIST': distro,
                        'GIT_PBUILDER_OPTIONS': Interpolate('--basepath /var/cache/pbuilder/base-{distro}-{arch}.cow '.format(distro=distro, arch=arch)
-                                                         + '--hookdir %(prop:workdir)s/hooks --override-config'),
-                       'OTHERMIRROR': othermirror },
+                                                         + '--hookdir %(prop:workdir)s/hooks --override-config')},
                 descriptionDone = ['binarydeb', package]
             )
         )
@@ -261,15 +205,6 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                                's3://{s3_bucket}'.format(s3_bucket=spec_list["s3_bucket"])]
                 )
             )
-    # Trigger if needed
-    # if trigger_pkgs != None:
-    #     f.addStep(
-    #         Trigger(
-    #             schedulerNames = [t.replace('_','-')+'-'+rosdistro+'-'+distro+'-'+arch+'-debtrigger' for t in trigger_pkgs],
-    #             waitForFinish = False,
-    #             alwaysRun=True
-    #         )
-    #     )
     # Create trigger
     c['schedulers'].append(
         triggerable.Triggerable(
