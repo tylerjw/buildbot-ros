@@ -100,7 +100,7 @@ Log in as the buildbot user, and do the following:
     cd ~
     virtualenv --no-site-packages buildbot-env
     source buildbot-env/bin/activate
-    export BUILDBOT_ROS=/path/to/buildbot-ros
+    export BUILDBOT_ROS=$PWD/buildbot-ros
     echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate && source buildbot-env/bin/activate
     pip install buildbot==0.8.12 requests
     pip install rosdistro
@@ -192,7 +192,7 @@ for the master. Once you have a buildbot user and virtualenv, do the following a
     source buildbot-env/bin/activate
     pip install buildbot-slave
     # Run the following two lines only if you're in different machine
-    export BUILDBOT_ROS=/path/to/buildbot-ros
+    export BUILDBOT_ROS=$PWD/buildbot-ros
     echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate && source buildbot-env/bin/activate
     buildslave create-slave rosbuilder1 localhost:9989 rosbuilder1 mebuildslotsaros
 
