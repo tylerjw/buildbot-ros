@@ -101,7 +101,7 @@ Log in as the buildbot user, and do the following:
     virtualenv --no-site-packages buildbot-env
     source buildbot-env/bin/activate
     export BUILDBOT_ROS=/path/to/buildbot-ros
-    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
+    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate && source buildbot-env/bin/activate
     pip install buildbot==0.8.12 requests
     pip install rosdistro
     pip install empy
@@ -126,7 +126,7 @@ installed into, as 'buildbot':
 
     cd buildbot-ros/scripts
     ./aptrepo-create.bash YourOrganizationName
-    
+
 By default, this script sets up a repository for amd64 and i386 on trusty only. You can fully
 specify what you want though: (on local machine run it with `sudo`)
 
@@ -193,7 +193,7 @@ for the master. Once you have a buildbot user and virtualenv, do the following a
     pip install buildbot-slave
     # Run the following two lines only if you're in different machine
     export BUILDBOT_ROS=/path/to/buildbot-ros
-    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate
+    echo "export PATH=${BUILDBOT_ROS}/scripts:${PATH}" >> buildbot-env/bin/activate && source buildbot-env/bin/activate
     buildslave create-slave rosbuilder1 localhost:9989 rosbuilder1 mebuildslotsaros
 
 If you are on a diffent machine then you will need to clone the buildbot-ros repo on it as well.
@@ -212,7 +212,7 @@ For builds to succeed, you'll probably need to make it so the buildbot can run c
 The best way around this is to allow the 'buildbot' user to execute git-buildpackage and
 pbuilder/cowbuilder without a password, by adding the following to your /etc/sudoers file
 (be sure to use visudo):
-    
+
     whoami # to get the USER_NAME
     sudo visudo
     USER_NAME    ALL= NOPASSWD: SETENV: /usr/bin/git-*, /usr/sbin/*builder
