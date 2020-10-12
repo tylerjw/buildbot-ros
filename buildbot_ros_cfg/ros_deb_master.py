@@ -54,6 +54,14 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
             getDescription={'tags': True}
         )
     )
+    # get the short commit hash
+    f.addStep(
+        SetPropertyFromCommand(
+            command="git rev-parse --short HEAD", property="commit_hash",
+            name = package+'-commit-short-hash',
+            hideStepIf = success
+        )
+    )
     # Update the cowbuilder
     f.addStep(
         ShellCommand(
@@ -126,6 +134,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         branch_name = 'debian/'+debian_pkg+'_%(prop:release_version)s-0_'+distro
         deb_name = debian_pkg+'_%(prop:release_version)s-0'+distro
         final_name = debian_pkg+'_%(prop:release_version)s-0'+distro+'_'+arch+'.deb'
+        final_name_master = debian_pkg+'_%(prop:release_version)s-%(prop:commit_hash)s'+distro+'_'+arch+'.deb'
         # Check out the proper tag. Use --force to delete changes from previous deb stamping
         f.addStep(
             ShellCommand(
@@ -173,7 +182,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
             FileUpload(
                 name = package+'-uploadbinary',
                 slavesrc = Interpolate('%(prop:workdir)s/'+final_name),
-                masterdest = Interpolate('binarydebs/'+final_name),
+                masterdest = Interpolate('binarydebs/'+final_name_master),
                 hideStepIf = success
             )
         )
@@ -181,7 +190,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         f.addStep(
             MasterShellCommand(
                 name = package+'-includedeb',
-                command = ['reprepro-include.bash', debian_pkg, Interpolate(final_name), distro, arch],
+                command = ['reprepro-include.bash', debian_pkg, Interpolate(final_name_master), distro, arch],
                 descriptionDone = ['updated in apt', package]
             )
         )
