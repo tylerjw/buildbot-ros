@@ -58,7 +58,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
     f.addStep(
         SetPropertyFromCommand(
             command="git rev-parse --short HEAD", property="commit_hash",
-            name = package+'-commit-short-hash',
+            name = 'commit-short-hash',
             hideStepIf = success
         )
     )
