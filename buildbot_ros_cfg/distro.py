@@ -91,7 +91,7 @@ class RosDistroOracle:
                 walker = SourceDependencyWalker(dist)
                 packages_depends = dict()
                 for package in packages:
-                    depends = walker.get_recursive_depends(package, ["build", "test"], True)
+                    depends = walker.get_recursive_depends(package, ["build", "test", "run", "exec"], True)
                     depends = {depend for depend in depends if depend in packages}
                     packages_depends[package] = depends
                 self.ordered_packages[dist_name][repo_name] = toposort_flatten(packages_depends)
