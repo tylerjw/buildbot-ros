@@ -133,8 +133,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         debian_pkg = 'ros-'+rosdistro+'-'+package.replace('_','-')  # debian package name (ros-groovy-foo)
         branch_name = 'debian/'+debian_pkg+'_%(prop:release_version)s-0_'+distro
         deb_name = debian_pkg+'_%(prop:release_version)s-0'+distro
-        final_name = debian_pkg+'_%(prop:release_version)s-0'+distro+'_'+arch+'.deb'
-        final_name_master = debian_pkg+'_%(prop:release_version)s-%(prop:commit_hash)s'+distro+'_'+arch+'.deb'
+        final_name = debian_pkg+'_%(prop:release_version)s-%(prop:commit_hash)s'+distro+'_'+arch+'.deb'
         # Check out the proper tag. Use --force to delete changes from previous deb stamping
         f.addStep(
             ShellCommand(
@@ -142,6 +141,17 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                 name = package+'-checkout',
                 command = ['git', 'checkout', Interpolate(branch_name), '--force'],
                 hideStepIf = success
+            )
+        )
+        # Stamp the changelog
+        f.addStep(
+            ShellCommand(
+                haltOnFailure = True,
+                name = package+'-stampdeb',
+                command = ['gbp', 'dch', '-a', '--ignore-branch', '--verbose',
+                           '-N', Interpolate('%(prop:release_version)s-%(prop:commit_hash)s'+distro)],
+                descriptionDone = ['stamped changelog', Interpolate('%(prop:release_version)s'),
+                                   Interpolate('%(prop:commit_hash)s')]
             )
         )
         # download hooks
@@ -182,7 +192,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
             FileUpload(
                 name = package+'-uploadbinary',
                 slavesrc = Interpolate('%(prop:workdir)s/'+final_name),
-                masterdest = Interpolate('binarydebs/'+final_name_master),
+                masterdest = Interpolate('binarydebs/'+final_name),
                 hideStepIf = success
             )
         )
@@ -190,7 +200,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         f.addStep(
             MasterShellCommand(
                 name = package+'-includedeb',
-                command = ['reprepro-include.bash', debian_pkg, Interpolate(final_name_master), distro, arch],
+                command = ['reprepro-include.bash', debian_pkg, Interpolate(final_name), distro, arch],
                 descriptionDone = ['updated in apt', package]
             )
         )
