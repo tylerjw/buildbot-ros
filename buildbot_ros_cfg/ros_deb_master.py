@@ -62,6 +62,14 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
             hideStepIf = success
         )
     )
+    # get the time stamp
+    f.addStep(
+        SetPropertyFromCommand(
+            command='date +%Y%M%d%H', property='date_stamp',
+            name = 'date-stamp',
+            hideStepIf = success
+        )
+    )
     # Update the cowbuilder
     f.addStep(
         ShellCommand(
@@ -133,7 +141,7 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
         debian_pkg = 'ros-'+rosdistro+'-'+package.replace('_','-')  # debian package name (ros-groovy-foo)
         branch_name = 'debian/'+debian_pkg+'_%(prop:release_version)s-0_'+distro
         deb_name = debian_pkg+'_%(prop:release_version)s-0'+distro
-        final_name = debian_pkg+'_%(prop:release_version)s-%(prop:commit_hash)s-'+distro+'_'+arch+'.deb'
+        final_name = debian_pkg+'_%(prop:release_version)s-%(prop:date_stamp)s-%(prop:commit_hash)s-'+distro+'_'+arch+'.deb'
         # Check out the proper tag. Use --force to delete changes from previous deb stamping
         f.addStep(
             ShellCommand(
@@ -149,9 +157,9 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                 haltOnFailure = True,
                 name = package+'-stampdeb',
                 command = ['gbp', 'dch', '-a', '--ignore-branch', '--verbose',
-                           '-N', Interpolate('%(prop:release_version)s-%(prop:commit_hash)s-'+distro)],
+                    '-N', Interpolate('%(prop:release_version)s-%(prop:date_stamp)s-%(prop:commit_hash)s-'+distro)],
                 descriptionDone = ['stamped changelog', Interpolate('%(prop:release_version)s'),
-                                   Interpolate('%(prop:commit_hash)s')]
+                    Interpolate('%(prop:date_stamp)s'), Interpolate('%(prop:commit_hash)s')]
             )
         )
         # download hooks
