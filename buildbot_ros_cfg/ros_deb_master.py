@@ -31,9 +31,6 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
     gbp_args = ['-uc', '-us', '--git-ignore-branch', '--git-ignore-new',
                 '--git-verbose', '--git-dist='+distro, '--git-arch='+arch]
 
-    with open(os.path.dirname(os.path.realpath(__file__)) + "/spec.yaml") as file:
-        spec_list = yaml.full_load(file)
-
     f = BuildFactory()
 
     # Remove the build directory.
@@ -219,19 +216,15 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                 hideStepIf = success
             )
         )
-        if spec_list["sync_s3"]:
-            f.addStep(
-                ShellCommand(
-                    name = package+'-s3-syncing',
-                    command = ['s3cmd',
-                               '--acl-public',
-                               '--delete-removed',
-                               '--verbose',
-                               'sync',
-                               spec_list["local_repo_path"],
-                               's3://{s3_bucket}'.format(s3_bucket=spec_list["s3_bucket"])]
-                )
+    # Trigger if needed
+    if trigger_pkgs != None:
+        f.addStep(
+            Trigger(
+                schedulerNames = [t.replace('_','-')+'-'+rosdistro+'-'+distro+'-'+arch+'-debtrigger' for t in trigger_pkgs],
+                waitForFinish = False,
+                alwaysRun=True
             )
+        )
     # Create trigger
     c['schedulers'].append(
         triggerable.Triggerable(

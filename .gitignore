@@ -1,0 +1,7 @@
+*.log
+*_debbuild
+*.pid
+*.pyc
+binarydebs
+buildbot.tac
+state.sqlite
