@@ -87,6 +87,8 @@ class RosDistroOracle:
             for repo_name in dist.repositories:
                 self.ordered_packages[dist_name] = dict()
                 repo = dist.repositories[repo_name]
+                if repo.release_repository == None:
+                    continue
                 packages = repo.release_repository.package_names
                 walker = SourceDependencyWalker(dist)
                 packages_depends = dict()
