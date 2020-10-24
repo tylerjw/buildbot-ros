@@ -41,14 +41,22 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
             hideStepIf = success,
         )
     )
-    # Check out the repository master branch, since releases are tagged and not branched
+    # Pulling the repo
     f.addStep(
         Git(
             repourl = url,
-            branch = branch,
+            branch = 'HEAD',
             alwaysUseLatest = True, # this avoids broken builds when schedulers send wrong tag/rev
             mode = 'full', # clean out old versions
             getDescription={'tags': True}
+        )
+    )
+    # Check out the repository branch/commit/tag
+    f.addStep(
+        ShellCommand(
+            haltOnFailure = True,
+            name = 'checkout: ' + branch,
+            command = ['git', 'checkout', branch],
         )
     )
     # get the short commit hash
