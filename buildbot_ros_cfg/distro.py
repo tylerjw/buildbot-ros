@@ -84,8 +84,8 @@ class RosDistroOracle:
 
             self.build_files[dist_name] = dict()
             # Get the packages name in order for building
+            self.ordered_packages[dist_name] = dict()
             for repo_name in dist.repositories:
-                self.ordered_packages[dist_name] = dict()
                 repo = dist.repositories[repo_name]
                 if repo.release_repository == None:
                     continue
