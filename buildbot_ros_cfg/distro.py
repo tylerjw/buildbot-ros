@@ -10,7 +10,7 @@ from buildbot_ros_cfg.ros_test import ros_testbuild
 from buildbot_ros_cfg.ros_doc import ros_docbuild
 from buildbot_ros_cfg.ros_deb_master import ros_branch_build
 
-from toposort import toposort_flatten
+from toposort import toposort_flatten, toposort
 #import ros_buildfarm
 #from ros_buildfarm.config import get_release_build_files
 ## @brief The Oracle tells you all you need to build stuff
@@ -28,6 +28,7 @@ class RosDistroOracle:
         self.build_order = {}
         self.build_files = {}
         self.ordered_packages = {}
+        self.ordered_repos = {}
         for dist_name in distro_names:
             self.distributions[dist_name] = get_cached_distribution(index, dist_name, allow_lazy_load = True)
             dist = self.distributions[dist_name]
@@ -83,20 +84,27 @@ class RosDistroOracle:
             self.build_order[dist_name]['deb_jobs'] = order
 
             self.build_files[dist_name] = dict()
-            # Get the packages name in order for building
+            # Get the packages & repos name in order for building
             self.ordered_packages[dist_name] = dict()
+            repos_depends = dict()
             for repo_name in dist.repositories:
                 repo = dist.repositories[repo_name]
+                packages = list()
                 if repo.release_repository == None:
-                    continue
-                packages = repo.release_repository.package_names
+                    packages = dist.get_source_repo_package_xmls(repo_name).keys()
+                else:
+                    packages = repo.release_repository.package_names
                 walker = SourceDependencyWalker(dist)
+                repo_depends = walker.get_recursive_depends(repo_name, ["build", "test", "run", "exec"], True)
+                repo_depends = {dist.source_packages[depend].repository_name for depend in repo_depends if depend in dist.source_packages.keys()}
+                repos_depends[repo_name] = repo_depends
                 packages_depends = dict()
                 for package in packages:
-                    depends = walker.get_recursive_depends(package, ["build", "test", "run", "exec"], True)
-                    depends = {depend for depend in depends if depend in packages}
-                    packages_depends[package] = depends
+                    package_depends = walker.get_recursive_depends(package, ["build", "test", "run", "exec"], True)
+                    package_depends = {depend for depend in package_depends if depend in packages}
+                    packages_depends[package] = package_depends
                 self.ordered_packages[dist_name][repo_name] = toposort_flatten(packages_depends)
+            self.ordered_repos[dist_name] = list(toposort(repos_depends))
             # TODO: this is a bit hacky, come up with a better way to get 'correct' build
             self.build_files[dist_name]['release'] = get_release_build_files(self.index, dist_name)[0]
             self.build_files[dist_name]['source'] = get_source_build_files(self.index, dist_name)[0]
@@ -113,6 +121,9 @@ class RosDistroOracle:
     ## @brief Get the order to build debian packages within a single repository
     def getOrderedPackages(self, repo_name, dist_name):
         return self.ordered_packages[dist_name][repo_name]
+    ## @brief Get the order to build the repositories
+    def getOrderedRepositories(self, dist_name):
+        return self.ordered_repos[dist_name]
 
     ## @brief Get the order to build debian packages within a single repository
     def getPackageOrder(self, repo_name, dist_name):
@@ -291,8 +302,7 @@ def branch_debbuilders_from_rosdistro(c, oracle, distro, builders):
                                                      distro,
                                                      builders,
                                                      oracle.getOtherMirror('source', distro, code_name),
-                                                     oracle.getKeys('source', distro),
-                                                     oracle.getDebTrigger(name, distro)))
+                                                     oracle.getKeys('source', distro)))
     return jobs
 
 ## @brief Create testbuilders from source file

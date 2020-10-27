@@ -26,8 +26,7 @@ import os
 ## @param machines List of machines this can build on.
 ## @param othermirror Cowbuilder othermirror parameter
 ## @param keys List of keys that cowbuilder will need
-## @param trigger_pkgs List of packages names to trigger after our build is done.
-def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro, machines, othermirror, keys, trigger_pkgs = None):
+def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro, machines, othermirror, keys):
     gbp_args = ['-uc', '-us', '--git-ignore-branch', '--git-ignore-new',
                 '--git-verbose', '--git-dist='+distro, '--git-arch='+arch]
 
@@ -222,15 +221,6 @@ def ros_branch_build(c, job_name, packages, url, branch, distro, arch, rosdistro
                 name = package+'-clean',
                 command = ['rm', '-rf', 'debian/'+debian_pkg],
                 hideStepIf = success
-            )
-        )
-    # Trigger if needed
-    if trigger_pkgs != None:
-        f.addStep(
-            Trigger(
-                schedulerNames = [t.replace('_','-')+'-'+rosdistro+'-'+distro+'-'+arch+'-debtrigger' for t in trigger_pkgs],
-                waitForFinish = False,
-                alwaysRun=True
             )
         )
     # Create trigger
